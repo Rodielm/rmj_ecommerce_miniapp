@@ -1,9 +1,8 @@
 package com.example.rmj_ecomerce.application.port.in;
 
-import java.util.Optional;
-
 import com.example.rmj_ecomerce.domain.Price;
+import com.example.rmj_ecomerce.domain.exception.PriceNotFoundException;
 
 public interface GetPriceUseCase {
-    Optional<Price> getPrice(GetPriceQuery query);
+    Price getPrice(GetPriceQuery query) throws PriceNotFoundException;;
 }

@@ -1,7 +1,7 @@
 package com.example.rmj_ecomerce.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.rmj_ecomerce.application.port.in.GetPriceQuery;
 import com.example.rmj_ecomerce.application.port.out.LoadPricePort;
 import com.example.rmj_ecomerce.domain.Price;
+import com.example.rmj_ecomerce.domain.exception.PriceNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 public class GetPriceServiceTest {
@@ -28,7 +29,7 @@ public class GetPriceServiceTest {
     private GetPriceService getPriceService;
 
     @Test
-    void shouldReturnPriceWhenExists() {
+    void shouldReturnPriceWhenExists() throws PriceNotFoundException {
         // Given
         LocalDateTime appDate = LocalDateTime.parse("2020-06-14T10:00:00");
         GetPriceQuery query = new GetPriceQuery(35455, 1, appDate);
@@ -47,31 +48,32 @@ public class GetPriceServiceTest {
                 .thenReturn(Optional.of(expectedPrice));
 
         // When
-        Optional<Price> result = getPriceService.getPrice(query);
+        Price result = getPriceService.getPrice(query);
 
         // Then
-        assertTrue(result.isPresent());
-        Price price = result.get();
-        assertEquals(expectedPrice.getProductId(), price.getProductId());
-        assertEquals(expectedPrice.getBrandId(), price.getBrandId());
-        assertEquals(expectedPrice.getPrice(), price.getPrice());
-        assertEquals(expectedPrice.getCurrency(), price.getCurrency());
+        assertEquals(expectedPrice.getProductId(), result.getProductId());
+        assertEquals(expectedPrice.getBrandId(), result.getBrandId());
+        assertEquals(expectedPrice.getPriceList(), result.getPriceList());
+        assertEquals(expectedPrice.getStartDate(), result.getStartDate());
+        assertEquals(expectedPrice.getEndDate(), result.getEndDate());
+        assertEquals(expectedPrice.getPrice(), result.getPrice());
+        assertEquals(expectedPrice.getCurrency(), result.getCurrency());
     }
 
-
     @Test
-    void shouldReturnEmptyWhenNoPriceExists() {
+    void shouldThrowPriceNotFoundExceptionWhenPriceDoesNotExist() {
         // Given
         LocalDateTime appDate = LocalDateTime.parse("2020-06-14T10:00:00");
         GetPriceQuery query = new GetPriceQuery(35455, 1, appDate);
-        
+
         when(loadPricePort.loadPrice(eq(35455), eq(1), any()))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
-        // When
-        Optional<Price> result = getPriceService.getPrice(query);
+        // When & Then
+        PriceNotFoundException exception = assertThrows(
+                PriceNotFoundException.class,
+                () -> getPriceService.getPrice(query));
 
-        // Then
-        assertTrue(result.isEmpty());
+        assertEquals("Precio no encontrado para los parametros indicados", exception.getMessage());
     }
 }

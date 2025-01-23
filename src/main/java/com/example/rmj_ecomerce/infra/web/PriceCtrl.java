@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.rmj_ecomerce.application.port.in.GetPriceQuery;
 import com.example.rmj_ecomerce.application.port.in.GetPriceUseCase;
+import com.example.rmj_ecomerce.domain.Price;
+import com.example.rmj_ecomerce.domain.exception.PriceNotFoundException;
 import com.example.rmj_ecomerce.infra.web.dto.PriceResponse;
 import com.example.rmj_ecomerce.infra.web.mapper.PriceResponseMapper;
 
@@ -29,16 +31,18 @@ public class PriceCtrl {
     private final PriceResponseMapper mapper;
 
     @GetMapping
-    @Operation(summary = "Get price for a product at a specific date")
+    @Operation(summary = "Obtener el precio de un producto en una fecha determinada")
     ResponseEntity<PriceResponse> getPrice(
-            @Parameter(description = "Application date", required = true) @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime applicationDate,
+            @Parameter(description = "Application date", required = true) @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime appDate,
             @Parameter(description = "Product ID", required = true) @RequestParam int productId,
             @Parameter(description = "Brand ID", required = true) @RequestParam int brandId) {
-        GetPriceQuery query = new GetPriceQuery(productId, brandId, applicationDate);
+        GetPriceQuery query = new GetPriceQuery(productId, brandId, appDate);
 
-        return getPriceUseCase.getPrice(query)
-                .map(mapper::toResponse)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            Price price = getPriceUseCase.getPrice(query);
+            return ResponseEntity.ok(mapper.toResponse(price));
+        } catch (PriceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

@@ -9,6 +9,7 @@ import com.example.rmj_ecomerce.application.port.in.GetPriceQuery;
 import com.example.rmj_ecomerce.application.port.in.GetPriceUseCase;
 import com.example.rmj_ecomerce.application.port.out.LoadPricePort;
 import com.example.rmj_ecomerce.domain.Price;
+import com.example.rmj_ecomerce.domain.exception.PriceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,11 +20,12 @@ public class GetPriceService implements GetPriceUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Price> getPrice(GetPriceQuery query) {
+    public Price getPrice(GetPriceQuery query) {
         return loadPricePort.loadPrice(
                 query.productId(),
                 query.brandId(),
-                query.applicationDate());
+                query.applicationDate())
+                .orElseThrow(() -> new PriceNotFoundException("Precio no encontrado para los parametros indicados"));
     }
 
 }
